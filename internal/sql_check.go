@@ -29,7 +29,7 @@ recognized by sqlchk.
 `
 
 var Analyzer = &analysis.Analyzer{
-	Name:      "sqlchk",
+	Name:      "gosqlcheck",
 	Doc:       doc,
 	Run:       run,
 	FactTypes: []analysis.Fact{},
@@ -44,8 +44,6 @@ type SqlCheckConfig struct {
 
 func run(pass *analysis.Pass) (any, error) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-
-	logger.Info().Msg("Starting sqlchk")
 
 	cfg := SqlCheckConfig{}
 
@@ -66,6 +64,10 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, fmt.Errorf("database url is empty")
 	}
 
+	if !strings.HasSuffix(databaseUrl, "?sslmode=disable") {
+		databaseUrl = databaseUrl + "?sslmode=disable"
+	}
+
 	var driver string
 
 	if cfg.DRIVER != "" {
@@ -73,24 +75,21 @@ func run(pass *analysis.Pass) (any, error) {
 	}
 
 	if driver == "" {
-		logger.Info().Msgf("Driver not set, using postgres")
 		driver = "postgres"
 	}
 
-	logger.Info().Msgf("Driver: %s", driver)
+	db, err := sqlx.Connect(driver, databaseUrl)
 
-	db, err := sqlx.Connect(driver, databaseUrl+"?sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
+
 	defer db.Close()
 
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	filterNodes := []ast.Node{
 		(*ast.BasicLit)(nil),
 	}
-
-	fmt.Printf("%+v \n", filterNodes)
 
 	inspect.Preorder(filterNodes, func(n ast.Node) {
 		node := n.(*ast.BasicLit)
