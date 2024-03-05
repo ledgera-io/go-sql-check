@@ -1,4 +1,4 @@
-package gosqltest
+package sql_check
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/chalfel/sql-check-test/config"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/ledgera-io/go-sql-check/config"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"

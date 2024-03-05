@@ -1,10 +1,10 @@
 package main
 
 import (
-	gosqltest "github.com/chalfel/sql-check-test/internal"
+	sql_check "github.com/ledgera-io/go-sql-check/internal"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
 func main() {
-	singlechecker.Main(gosqltest.Analyzer)
+	singlechecker.Main(sql_check.Analyzer)
 }
