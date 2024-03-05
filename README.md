@@ -3,7 +3,7 @@
 ## Installation
 
 ```
-go install github.com/thedenisnikulin/sqlchk/cmd/sqlchk@latest
+go install github.com/ledgera-io/go-sql-check@latest
 ```
 
 And application code:
