@@ -1,4 +1,4 @@
-module github.com/chalfel/sql-check-test
+module github.com/ledgera-io/go-sql-check
 
 go 1.21.4
 
