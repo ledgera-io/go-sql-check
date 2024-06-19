@@ -7,6 +7,14 @@ import (
 	gotdotenv "github.com/joho/godotenv"
 )
 
+func LoadDotEnv() error {
+	if err := gotdotenv.Load(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func LoadConfigFromEnv(c any) error {
 	if os.Getenv("ENV") != "production" {
 		if err := gotdotenv.Load(); err != nil {

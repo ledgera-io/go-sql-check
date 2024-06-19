@@ -1,6 +1,7 @@
 package sql_check
 
 import (
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -28,6 +29,8 @@ The SQL queries in your code are required to start with "--sql" prefix to be
 recognized by sqlchk.
 `
 
+var DatabaseEnv string
+
 var Analyzer = &analysis.Analyzer{
 	Name:      "gosqlcheck",
 	Doc:       doc,
@@ -42,21 +45,52 @@ type SqlCheckConfig struct {
 	DRIVER       string `env:"DRIVER"`
 }
 
-func run(pass *analysis.Pass) (any, error) {
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+func init() {
+	flag.StringVar(&DatabaseEnv, "database-env", "", "Database env")
+}
+
+func getDatabaseUrl(logger *zerolog.Logger) (string, error) {
+	var databaseUrl string
+
+	if DatabaseEnv != "" {
+		if err := config.LoadDotEnv(); err != nil {
+			return "", err
+		}
+
+		databaseUrl := os.Getenv(DatabaseEnv)
+
+		if databaseUrl == "" {
+			logger.Error().Msg("database url is empty")
+			return "", fmt.Errorf("database url is empty")
+		}
+
+		return databaseUrl, nil
+	}
 
 	cfg := SqlCheckConfig{}
 
 	err := config.LoadConfigFromEnv(&cfg)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	var databaseUrl string
+
 	if cfg.POSTGRES_DNS != "" {
 		databaseUrl = cfg.POSTGRES_DNS
 	} else {
 		databaseUrl = cfg.DATABASE_URL
+	}
+
+	return databaseUrl, nil
+}
+
+func run(pass *analysis.Pass) (any, error) {
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+
+	databaseUrl, err := getDatabaseUrl(&logger)
+
+	if err != nil {
+		return nil, err
 	}
 
 	if databaseUrl == "" {
@@ -68,15 +102,7 @@ func run(pass *analysis.Pass) (any, error) {
 		databaseUrl = databaseUrl + "?sslmode=disable"
 	}
 
-	var driver string
-
-	if cfg.DRIVER != "" {
-		driver = cfg.DRIVER
-	}
-
-	if driver == "" {
-		driver = "postgres"
-	}
+	driver := "postgres"
 
 	db, err := sqlx.Connect(driver, databaseUrl)
 
